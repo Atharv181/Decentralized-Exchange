@@ -67,4 +67,48 @@ contract Exchange is ERC20 {
 
         return numerator / denominator;
     }
+
+    // ethToTokenSwap allows users to swap ETH for tokens
+function ethToTokenSwap(uint256 minTokensToReceive) public payable {
+    uint256 tokenReserveBalance = getReserve();
+    uint256 tokensToReceive = getOutputAmountFromSwap(
+        msg.value,
+        address(this).balance - msg.value,
+        tokenReserveBalance
+    );
+
+    require(
+        tokensToReceive >= minTokensToReceive,
+        "Tokens received are less than minimum tokens expected"
+    );
+
+    ERC20(tokenAddress).transfer(msg.sender, tokensToReceive);
+}
+
+// tokenToEthSwap allows users to swap tokens for ETH
+function tokenToEthSwap(
+    uint256 tokensToSwap,
+    uint256 minEthToReceive
+) public {
+    uint256 tokenReserveBalance = getReserve();
+    uint256 ethToReceive = getOutputAmountFromSwap(
+        tokensToSwap,
+        tokenReserveBalance,
+        address(this).balance
+    );
+
+    require(
+        ethToReceive >= minEthToReceive,
+        "ETH received is less than minimum ETH expected"
+    );
+
+    ERC20(tokenAddress).transferFrom(
+        msg.sender,
+        address(this),
+        tokensToSwap
+    );
+
+    payable(msg.sender).transfer(ethToReceive);
+}
+
 }
